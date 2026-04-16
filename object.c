@@ -175,6 +175,7 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     char path[512];
     object_path(id, path, sizeof(path));
 
+    // 1. Open and get file size
     FILE *f = fopen(path, "rb");
     if (!f) return -1;
 
@@ -182,16 +183,21 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     long size = ftell(f);
     rewind(f);
 
+    // 2. Read entire file into buffer
     unsigned char *buffer = malloc(size);
     if (!buffer) {
         fclose(f);
         return -1;
     }
 
-    fread(buffer, 1, size, f);
+    if (fread(buffer, 1, size, f) != (size_t)size) {
+        free(buffer);
+        fclose(f);
+        return -1;
+    }
     fclose(f);
 
-    // Verify hash
+    // 3. Integrity Check: Verify hash matches
     ObjectID computed;
     compute_hash(buffer, size, &computed);
     if (memcmp(computed.hash, id->hash, HASH_SIZE) != 0) {
@@ -199,29 +205,28 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
         return -1;
     }
 
-    // Parse header
+    // 4. Parse Header (Find where data starts)
     char *null_pos = memchr(buffer, '\0', size);
     if (!null_pos) {
         free(buffer);
         return -1;
     }
+    size_t header_len = (null_pos - (char *)buffer);
 
-   
-    size_t header_to_null_len = (null_pos - (char *)buffer); 
-    // Then:
-    memcpy(*data_out, buffer + header_to_null_len + 1, data_len);
-
-    char type_str[10];
+    // 5. Extract Type and Length from Header string
+    char type_str[16];
     size_t data_len;
-    sscanf((char *)buffer, "%s %zu", type_str, &data_len);
+    if (sscanf((char *)buffer, "%15s %zu", type_str, &data_len) != 2) {
+        free(buffer);
+        return -1;
+    }
 
-    if (strcmp(type_str, "blob") == 0)
-        *type_out = OBJ_BLOB;
-    else if (strcmp(type_str, "tree") == 0)
-        *type_out = OBJ_TREE;
-    else
-        *type_out = OBJ_COMMIT;
+    if (strcmp(type_str, "blob") == 0)      *type_out = OBJ_BLOB;
+    else if (strcmp(type_str, "tree") == 0) *type_out = OBJ_TREE;
+    else if (strcmp(type_str, "commit") == 0) *type_out = OBJ_COMMIT;
+    else { free(buffer); return -1; }
 
+    // 6. Allocate for Data and Copy (SKIP header + '\0')
     *data_out = malloc(data_len);
     if (!*data_out) {
         free(buffer);
@@ -231,6 +236,7 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
     memcpy(*data_out, buffer + header_len + 1, data_len);
     *len_out = data_len;
 
+    // 7. Cleanup temp buffer
     free(buffer);
     return 0;
 }
