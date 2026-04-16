@@ -1,3 +1,4 @@
+<img width="1916" height="205" alt="Screenshot 2026-04-16 143924" src="https://github.com/user-attachments/assets/cbf5a4d8-1939-4f45-9753-8429440b8871" />
 <img width="1232" height="132" alt="Screenshot 2026-04-16 110102" src="https://github.com/user-attachments/assets/795d5cf2-3d6d-4692-8eb2-8fc961f451b3" /># Building PES-VCS — A Version Control System from Scratch
 
 **Objective:** Build a local version control system that tracks file changes, stores snapshots efficiently, and supports commit history. Every component maps directly to operating system and filesystem concepts.
@@ -410,6 +411,9 @@ The test program verifies:
 - Deterministic serialization (same entries in any order → identical output)
 
 **📸 Screenshot 2A:** Output of `./test_tree` showing all tests passing.
+
+![Uploading Screenshot 2026-04-16 143924.png…]()
+
 
 **📸 Screenshot 2B:** Pick a tree object from `find .pes/objects -type f` and run `xxd .pes/objects/XX/YYY... | head -20` to show the raw binary format.
 
