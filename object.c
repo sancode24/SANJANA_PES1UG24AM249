@@ -117,6 +117,9 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     char path[512];
     object_path(id_out, path, sizeof(path));
 
+    mkdir(".pes", 0755);
+    mkdir(".pes/objects", 0755);
+
     // Create directory
     char dir[512];
     strncpy(dir, path, sizeof(dir));
