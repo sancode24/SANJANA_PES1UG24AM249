@@ -129,9 +129,80 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 //   - object_write    : save that binary buffer to the store as OBJ_TREE
 //
 // Returns 0 on success, -1 on error.
+// Recursive helper to build a tree from a subset of index entries
+static int build_tree_recursive(const Index *idx, int start, int end, int prefix_len, ObjectID *id_out) {
+    Tree tree;
+    tree.count = 0;
+
+    for (int i = start; i < end; ) {
+        const char *path = idx->entries[i].path + prefix_len;
+        const char *slash = strchr(path, '/');
+
+        if (!slash) {
+            // It's a file in the current directory
+            TreeEntry *entry = &tree.entries[tree.count++];
+            entry->mode = idx->entries[i].mode;
+            strncpy(entry->name, path, sizeof(entry->name));
+            memcpy(entry->hash.hash, idx->entries[i].hash.hash, HASH_SIZE);
+            i++;
+        } else {
+            // It's a subdirectory
+            size_t dir_name_len = slash - path;
+            char dir_name[256];
+            strncpy(dir_name, path, dir_name_len);
+            dir_name[dir_name_len] = '\0';
+
+            // Find all files that start with this same directory name
+            int j = i;
+            while (j < end) {
+                const char *next_path = idx->entries[j].path + prefix_len;
+                if (strncmp(next_path, dir_name, dir_name_len) != 0 || next_path[dir_name_len] != '/') {
+                    break;
+                }
+                j++;
+            }
+
+            // Recurse to build the subtree for this directory
+            ObjectID sub_tree_id;
+            if (build_tree_recursive(idx, i, j, prefix_len + dir_name_len + 1, &sub_tree_id) != 0) {
+                return -1;
+            }
+
+            // Add the subtree entry to our current tree
+            TreeEntry *entry = &tree.entries[tree.count++];
+            entry->mode = MODE_DIR;
+            strncpy(entry->name, dir_name, sizeof(entry->name));
+            memcpy(entry->hash.hash, sub_tree_id.hash, HASH_SIZE);
+
+            i = j; // Skip all files that were inside that subdirectory
+        }
+    }
+
+    // Serialize and write this tree object to the store
+    void *data;
+    size_t len;
+    if (tree_serialize(&tree, &data, &len) != 0) return -1;
+    if (object_write(OBJ_TREE, data, len, id_out) != 0) {
+        free(data);
+        return -1;
+    }
+
+    free(data);
+    return 0;
+}
+
 int tree_from_index(ObjectID *id_out) {
-    // TODO: Implement recursive tree building
-    // (See Lab Appendix for logical steps)
-    (void)id_out;
-    return -1;
+    Index idx;
+    if (index_load(&idx) != 0) {
+        fprintf(stderr, "Error: Could not load index. Did you run 'pes add'?\n");
+        return -1;
+    }
+
+    if (idx.count == 0) {
+        fprintf(stderr, "Error: Index is empty. Nothing to commit.\n");
+        return -1;
+    }
+
+    // Start recursion from the root (prefix_len = 0)
+    return build_tree_recursive(&idx, 0, idx.count, 0, id_out);
 }
