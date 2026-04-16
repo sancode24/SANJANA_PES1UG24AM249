@@ -29,6 +29,7 @@
 
 #include "index.h"
 #include "pes.h"
+#include "tree.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,12 +171,7 @@ int index_status(const Index *index) {
 //   - index_find                       : checking if the file is already staged
 //
 // Returns 0 on success, -1 on error.
-int index_add(Index *index, const char *path) {
-    // TODO: Implement file staging
-    // (See Lab Appendix for logical steps)
-    (void)index; (void)path;
-    return -1;
-}
+
 int index_load(Index *index) {
     index->count = 0;
     FILE *f = fopen(INDEX_PATH, "r");
