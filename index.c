@@ -38,6 +38,8 @@
 #include <unistd.h>
 #include <dirent.h>
 
+#define INDEX_PATH ".pes/index"
+
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 // Find an index entry by path (linear scan).
@@ -174,7 +176,7 @@ int index_status(const Index *index) {
 
 int index_load(Index *index) {
     index->count = 0;
-    FILE *f = fopen(INDEX_PATH, "r");
+    FILE *f = fopen(".pes/index", "r");
     if (!f) return 0; // No index yet is not an error
 
     char line[1024];
@@ -215,7 +217,7 @@ int index_save(const Index *index) {
 
     // 2. Open temporary file
     char temp_path[512];
-    snprintf(temp_path, sizeof(temp_path), "%s.tmp", INDEX_PATH);
+    snprintf(temp_path, sizeof(temp_path), ".pes/index.tmp");
     FILE *f = fopen(temp_path, "w");
     if (!f) return -1;
 
@@ -235,7 +237,7 @@ int index_save(const Index *index) {
     fclose(f);
 
     // 5. Atomic swap
-    if (rename(temp_path, INDEX_PATH) != 0) {
+    if (rename(temp_path, ".pes/index") != 0){
         unlink(temp_path);
         return -1;
     }
