@@ -30,6 +30,7 @@
 #include "index.h"
 #include "pes.h"
 #include "tree.h"
+#include "object.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,8 +44,8 @@
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
 // Force the compiler to know these functions exists
-typedef enum { OBJ_BLOB, OBJ_TREE, OBJ_COMMIT } ObjectType;
-int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
+
+
 uint32_t get_file_mode(const char *path);
 // Find an index entry by path (linear scan).
 IndexEntry* index_find(Index *index, const char *path) {
@@ -270,7 +271,11 @@ int index_add(Index *index, const char *path) {
     if (!f) return -1;
     void *data = malloc(st.st_size);
     if (!data) { fclose(f); return -1; }
-    fread(data, 1, st.st_size, f);
+    if (fread(data, 1, st.st_size, f) != st.st_size) {
+    free(data);
+    fclose(f);
+    return -1;
+}
     fclose(f);
 
     ObjectID blob_id;
@@ -285,7 +290,8 @@ int index_add(Index *index, const char *path) {
     if (!e) {
         if (index->count >= MAX_INDEX_ENTRIES) return -1;
         e = &index->entries[index->count++];
-        strncpy(e->path, path, sizeof(e->path));
+        strncpy(e->path, path, sizeof(e->path) - 1);
+        e->path[sizeof(e->path) - 1] = '\0';
     }
 
     // 4. Update metadata
