@@ -1,4 +1,4 @@
-# Building PES-VCS — A Version Control System from Scratch
+<img width="1232" height="132" alt="Screenshot 2026-04-16 110102" src="https://github.com/user-attachments/assets/795d5cf2-3d6d-4692-8eb2-8fc961f451b3" /># Building PES-VCS — A Version Control System from Scratch
 
 **Objective:** Build a local version control system that tracks file changes, stores snapshots efficiently, and supports commit history. Every component maps directly to operating system and filesystem concepts.
 
@@ -375,9 +375,11 @@ The test program verifies:
 - Integrity checking (detects corrupted objects)
 
 **📸 Screenshot 1A:** Output of `./test_objects` showing all tests passing.
+<img width="1459" height="211" alt="Screenshot 2026-04-16 105931" src="https://github.com/user-attachments/assets/1469f99e-fe03-40d5-ae16-b8db4f1b9e86" />
+
 
 **📸 Screenshot 1B:** `find .pes/objects -type f` showing the sharded directory structure.
-
+![Uploading Screenshot 2026-04-16 110102.png…]()
 ---
 
 ## Phase 2: Tree Objects
@@ -387,6 +389,7 @@ The test program verifies:
 **Files:** `tree.h` (read), `tree.c` (implement all TODO functions)
 
 ### What to Implement
+
 
 Open `tree.c`. Implement the function marked `// TODO`:
 
