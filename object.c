@@ -46,6 +46,12 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     
     // 6. OS Persistence
     fsync(fd);
+    int fd = open(temp_path, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    if (fd < 0) { 
+    perror("Failed to open file"); // This will tell you WHY it failed (e.g., "No such file or directory")
+    free(full_obj); 
+    return -1; 
+}
     close(fd);
     rename(temp_path, path);
 
