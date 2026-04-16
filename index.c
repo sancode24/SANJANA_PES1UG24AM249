@@ -30,7 +30,7 @@
 #include "index.h"
 #include "pes.h"
 #include "tree.h"
-
+#include "object.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
