@@ -206,7 +206,10 @@ int object_read(const ObjectID *id, ObjectType *type_out, void **data_out, size_
         return -1;
     }
 
-    size_t header_len = null_pos - (char *)buffer;
+   
+    size_t header_to_null_len = (null_pos - (char *)buffer); 
+    // Then:
+    memcpy(*data_out, buffer + header_to_null_len + 1, data_len);
 
     char type_str[10];
     size_t data_len;
