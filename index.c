@@ -42,6 +42,10 @@
 
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
 
+// Force the compiler to know these functions exists
+typedef enum { OBJ_BLOB, OBJ_TREE, OBJ_COMMIT } ObjectType;
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
+uint32_t get_file_mode(const char *path);
 // Find an index entry by path (linear scan).
 IndexEntry* index_find(Index *index, const char *path) {
     for (int i = 0; i < index->count; i++) {
