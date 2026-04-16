@@ -28,6 +28,7 @@
 // TODO functions:     index_load, index_save, index_add
 
 #include "index.h"
+#include "pes.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -146,12 +147,7 @@ int index_status(const Index *index) {
 //   - hex_to_hash                      : converting the parsed string to ObjectID
 //
 // Returns 0 on success, -1 on error.
-int index_load(Index *index) {
-    // TODO: Implement index loading
-    // (See Lab Appendix for logical steps)
-    (void)index;
-    return -1;
-}
+
 
 // Save the index to .pes/index atomically.
 //
@@ -163,12 +159,7 @@ int index_load(Index *index) {
 //   - rename                           : atomically moving the temp file over the old index
 //
 // Returns 0 on success, -1 on error.
-int index_save(const Index *index) {
-    // TODO: Implement atomic index saving
-    // (See Lab Appendix for logical steps)
-    (void)index;
-    return -1;
-}
+
 
 // Stage a file for the next commit.
 //
@@ -196,7 +187,7 @@ int index_load(Index *index) {
         char hash_hex[HASH_HEX_SIZE + 1];
         
         // Format: <mode> <hash> <mtime> <size> <path>
-        if (sscanf(line, "%o %64s %ld %zu %255s", 
+        if (sscanf(line, "%o %64s %ld %u %255s", 
                    &e->mode, hash_hex, &e->mtime_sec, &e->size, e->path) == 5) {
             hex_to_hash(hash_hex, &e->hash);
             index->count++;
@@ -217,6 +208,9 @@ int index_load(Index *index) {
 //   - rename                           : atomically moving the temp file over the old index
 //
 // Returns 0 on success, -1 on error.
+static int compare_index_entries(const void *a, const void *b) {
+    return strcmp(((const IndexEntry *)a)->path, ((const IndexEntry *)b)->path);
+}
 
 int index_save(const Index *index) {
     // 1. Sort entries by path (standard Git behavior)
@@ -233,7 +227,7 @@ int index_save(const Index *index) {
     for (int i = 0; i < sorted_idx.count; i++) {
         char hash_hex[HASH_HEX_SIZE + 1];
         hash_to_hex(&sorted_idx.entries[i].hash, hash_hex);
-        fprintf(f, "%o %s %ld %zu %s\n", 
+        fprintf(f, "%o %s %ld %u %s\n", 
                 sorted_idx.entries[i].mode, hash_hex, 
                 sorted_idx.entries[i].mtime_sec, sorted_idx.entries[i].size, 
                 sorted_idx.entries[i].path);
